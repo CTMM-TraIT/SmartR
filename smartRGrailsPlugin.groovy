@@ -102,7 +102,10 @@ class smartRGrailsPlugin {
             ctx.getBean(RScriptsSynchronizer).skip()
         }
 
-        if (ctx.containsBean(TRANSMART_EXTENSIONS_REGISTRY_BEAN_NAME)) {
+        def grailsApplication = ctx.getBean('grailsApplication')
+        boolean smartREnabled = !grailsApplication.config.ui.analyzetabs.smartR.hide
+
+        if (smartREnabled && ctx.containsBean(TRANSMART_EXTENSIONS_REGISTRY_BEAN_NAME)) {
             ctx.getBean(TRANSMART_EXTENSIONS_REGISTRY_BEAN_NAME)
                     .registerAnalysisTabExtension('smartR', '/SmartR/loadScripts', 'addSmartRPanel')
         }
