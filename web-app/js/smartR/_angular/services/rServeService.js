@@ -101,7 +101,7 @@ window.smartRApp.factory('rServeService', [
                     sessionId: sessionId
                 }
             });
-        }
+        };
 
         service.destroySession = function(sessionId) {
             sessionId = sessionId || state.sessionId;
@@ -290,6 +290,7 @@ window.smartRApp.factory('rServeService', [
                     }
                 }).then(
                     function(response) {
+                        console.log('response', response);
                         if (response.result.artifacts.files.length > 0) {
                             service.composeSummaryResults(response.result.artifacts.files, response.executionId, phase)
                                 .then(
