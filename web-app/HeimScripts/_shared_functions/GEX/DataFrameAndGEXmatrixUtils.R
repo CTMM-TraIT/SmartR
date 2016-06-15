@@ -8,6 +8,9 @@
 ## GEX data frame (variance, coefficient of variation, ... )            ##
 ##########################################################################
 
+if (!exists("remoteScriptDir")) {  #  Needed for unit-tests
+  remoteScriptDir <- "web-app/HeimScripts"
+}
 
 ## Loading functions ##
 utils <- paste(remoteScriptDir, "/_shared_functions/Generic/utils.R", sep="")
@@ -712,14 +715,6 @@ buildExtraFieldsLowDim <- function(ld.list) {
       ## if corresponding data type is numeric
       if(type.vec[i] == "numeric"){
         ZSCORE.value = (ld_var.df[j,2] - mean(ld_var.df[,2], na.rm = TRUE)) / sd(ld_var.df[,2], na.rm = TRUE)
-        
-        ## In case there is not enough data to calculate z-score
-        ## after removing NAs from mean and standard deviation
-        ## we set the content of theZSCORE.value variable to the string "NA" 
-        if(is.na(ZSCORE.value)){
-          ZSCORE.value = NA
-        }
-        
       } else{
         ZSCORE.value = NA
       }
@@ -744,6 +739,7 @@ buildExtraFieldsLowDim <- function(ld.list) {
   
   ## Filtering out lines where VALUE is NA
   res.df = res.df[-which(is.na(res.df$VALUE)),]
+  res.df = res.df[-which(res.df$VALUE == ""),]
 
   return(res.df)
 }
@@ -928,6 +924,7 @@ getRankingMethod <- function(rankingMethodName) {
 writeDataForZip <- function(df, zScores, pidCols) {
   df      <- df[ , -which(names(df) %in% pidCols)]  # Drop patient columns
   df      <- cbind(df,zScores)                      # Replace with zScores
+  df      <- df[ , -which(colnames(df) == "SIGNIFICANCE")]
   write.table(
     df,
     "heatmap_data.tsv",
