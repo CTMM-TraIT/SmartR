@@ -7,7 +7,7 @@ main <- function(excludedPatientIDs = integer(), useLog=FALSE) {
     output$excludedPatientIDs <- excludedPatientIDs
 
     df1 <- loaded_variables$datapoints_n0_s1
-    if (nrow(df1) == 0) {
+    if (is.null(df1) || nrow(df1) == 0) {
         stop(paste("Variable '", fetch_params$ontologyTerms$datapoints_n0$name, "' has no patients for subset 1"), sep="")
     }
     df1 <- prepareData(df1, excludedPatientIDs, useLog)
