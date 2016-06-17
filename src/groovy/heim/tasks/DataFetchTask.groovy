@@ -159,6 +159,7 @@ class DataFetchTask extends AbstractTask {
                     }
                 } as ThreadFactory)
 
+        clearPreviousCreatedFiles()
         clearPreviousLoadedVariables()
 
         allDatasets.each {
@@ -214,6 +215,12 @@ class DataFetchTask extends AbstractTask {
                 artifacts: ImmutableMap.of('currentLabels', currentLabels),)
     }
 
+    private clearPreviousCreatedFiles() {
+        rServeSession.doWithRConnection { RConnection conn ->
+            RUtil.runRCommand conn, 'file.remove(list.files())'
+        }
+    }
+
     private clearPreviousLoadedVariables() {
         String removeLoaded = "if (exists('loaded_variables')) { remove(loaded_variables, pos = '.GlobalEnv')}"
         String removePreprocessed = "if (exists('preprocessed')) { remove(preprocessed, pos = '.GlobalEnv')}"
@@ -261,7 +268,10 @@ class DataFetchTask extends AbstractTask {
             try {
                 PeekingIterator<? extends DataRow> it =
                         Iterators.peekingIterator(tabularResult.iterator())
-                boolean isBioMarker = it.peek().hasProperty('bioMarker')
+                boolean isBioMarker = false 
+                try { 
+                    isBioMarker = it.peek().hasProperty('bioMarker')
+                } catch(NoSuchElementException e) {}
                 if (isBioMarker == null) isBioMarker = false
                 writeHeader(csvWriter, isBioMarker, tabularResult.indicesList)
                 it.each { DataRow row ->
@@ -292,6 +302,7 @@ class DataFetchTask extends AbstractTask {
                 """
                 loaded_variables[['$escapedLabel']] <- read.csv(
                                '$escapedFilename', sep = "\t", header = TRUE, stringsAsFactors = FALSE);
+                loaded_variables <- loaded_variables[order(names(loaded_variables))]; # for determinism
                 names(loaded_variables)""",
         ]
         REXP rexp = rServeSession.doWithRConnection { RConnection conn ->
@@ -310,7 +321,7 @@ class DataFetchTask extends AbstractTask {
         }
         line += columns.collect {
             if (it instanceof AssayColumn) {
-                it.patientInTrialId  // for high dim data, use patient id rather than row label as the CSV header
+                it.patient.id  // for high dim data, use patient id rather than row label as the CSV header
             } else {
                 it.label
             }
@@ -320,7 +331,8 @@ class DataFetchTask extends AbstractTask {
     }
 
     private static void writeLine(CSVWriter writer, boolean isBioMarker, DataRow row) {
-        List line = [row.label]
+        def rowLabel = row.hasProperty('patient') && row.patient.hasProperty('id') ? row.patient.id : row.label
+        List line = [rowLabel]
         if (isBioMarker) {
             line += ((BioMarkerDataRow) row).bioMarker
         }

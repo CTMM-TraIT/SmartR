@@ -41,7 +41,7 @@ test.get.subset <- function()
 {
   test_patient_ids <- c("Assay1_blabla_s1","Assay2_bleblee_s2")
   result <- getSubset(test_patient_ids)
-  expected <- c(0,1)
+  expected <- c(1,2)
   checkEquals(result, expected)
 }
 
@@ -63,16 +63,17 @@ test.getSubset1Length <- function()
   checkEquals(result,expected)
 }
 
+## SE: Adapted to fit modified getDesign() fct
 test.getDesign <- function()
 {
   testMeasurements <- data.frame("a_n0_s1" = 1:3,
-     "b_n0_s1" = 1:3, "a_n1_s1" = 1:3, "b_n1_s1" = 1:3,
-     "a_n0_s2" = 1:3, "b_n0_s2" = 1:3 )
+                                 "b_n0_s1" = 1:3, "a_n1_s1" = 1:3, "b_n1_s1" = 1:3,
+                                 "a_n0_s2" = 1:3, "b_n0_s2" = 1:3 )
   expected <- matrix(
-    c(1, 1, 1, 1, 2, 2, 
-      2, 2, 2, 2, 1, 1),
+    c(1, 1, 1, 1, 0, 0, 
+      0, 0, 0, 0, 1, 1),
     ncol = 2
-   )
+  )
   colnames(expected) <- c("S1", "S2")
   result             <- getDesign(testMeasurements)
   checkEquals(result,expected)

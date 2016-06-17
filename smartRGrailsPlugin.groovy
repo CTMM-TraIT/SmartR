@@ -10,7 +10,7 @@ class smartRGrailsPlugin {
     public static final String TRANSMART_EXTENSIONS_REGISTRY_BEAN_NAME = 'transmartExtensionsRegistry'
 
     // the plugin version
-    def version = "1.0"
+    def version = "16.2-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.3 > *"
     // resources that are excluded from plugin packaging
@@ -83,9 +83,6 @@ class smartRGrailsPlugin {
 
         constants.pluginScriptDirectory = new File(smartRDir.canonicalPath, 'HeimScripts')
         log.info("Directory for heim scripts is ${constants.pluginScriptDirectory}")
-
-        constants.legacyScriptDirectory = new File(smartRDir.canonicalPath, 'Scripts')
-        log.info("Directory for legacy scripts is ${constants.legacyScriptDirectory}")
 
         if (!skipRScriptsTransfer(config)) {
             def remoteScriptDirectory =  config.smartR.remoteScriptDirectory
