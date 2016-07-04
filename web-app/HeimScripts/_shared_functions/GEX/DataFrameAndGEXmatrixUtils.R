@@ -330,7 +330,7 @@ getAllStatForExtDataFrame = function(df){
       stat_test = names(stat_tests)[i]
         
       ## Calculating values for the different stats
-      stat_test_value.vec = apply(measurements.df, 1, stat_test)
+      stat_test_value.vec = apply(measurements.df, 1, stat_test, na.rm = TRUE)
       
       ## Storing the different stats as col in results data frame
       Stat.df[[stat_tests2col[ stat_test ]]] = stat_test_value.vec
@@ -408,13 +408,13 @@ mergeDuplicates <- function(df) {
 # this method pretifies it with the actual node label like this: '123_BreastCancer'
 idToNodeLabel <- function(ids, ontologyTerms) {
   # extract patientID (123)
-  patientIDs <- sub("_.+_n[0-9]+_s[0-9]+", "", ids, perl=TRUE) # remove the _highDimensional_n0_s1
+  patientIDs <- sub("_.+_n[0-9]+_s[1-2]{1}$", "", ids, perl=TRUE) # remove the _highDimensional_n0_s1
   patientIDs <- sub("^X", "", patientIDs, perl=TRUE) # remove the X
   # extract subset (s1)
   subsets <- substring(ids, first=nchar(ids)-1, last=nchar(ids))
   # extract node label (Breast)
-  nodes <- sub(".+?_", "", ids, perl=TRUE) # remove the X123_
-  nodes <- as.vector(substring(nodes, first=1, last=nchar(nodes)-3))
+  nodes <- sub("^.+?_", "", ids, perl=TRUE) # remove the X123_
+  nodes <- as.vector(substring(nodes, first=1, last=nchar(nodes)-3)) # remove the _s1
   nodeLabels <- as.vector(sapply(nodes, function(node) return(ontologyTerms[[node]]$name)))
   # put everything together (123, Breast, s1)
   paste(patientIDs, nodeLabels, subsets, sep="_")
@@ -925,16 +925,11 @@ writeDataForZip <- function(df, zScores, pidCols) {
 ## and sample measurements. Probes are merged according to maxMean, this means the row with highest mean
 ## intensity for same biomarker will be retained.
 aggregate.probes <- function(df) {
-  
-  if(nrow(df)<2){
-    stop("Cannot aggregate probes: there only is data for a single probe (ie. only one row of data) or 
-         there is insufficient bio.marker information for the selected probes to be able to match the probes to 
-         biomarkers for aggregation (e.g. in case of micro-array data to match probe ID to gene symbol). 
-         Suggestion: skip probe aggregation.")
+  if (ncol(df) <= 3) {
+    stop("Cannot aggregate probes with single sample.")
   }
   
   measurements <- df[,3:ncol(df)]
-  
   
   row.names(measurements) <- df[,1]
   collapsed <- collapseRows(measurements, df[,2], df[,1], "MaxMean",

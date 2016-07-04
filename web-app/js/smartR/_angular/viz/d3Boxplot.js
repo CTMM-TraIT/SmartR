@@ -152,12 +152,12 @@ window.smartRApp.directive('boxplot', [
         boxplot.call(contextMenu);
 
         function _addEventListeners() {
-            document.getElementById('sr-boxplot-exclude-btn').addEventListener('click', function() {
+            smartRUtils.getElementWithoutEventListeners('sr-boxplot-exclude-btn').addEventListener('click', function() {
                 contextMenu.hide();
                 excludeSelection();
             });
 
-            document.getElementById('sr-boxplot-reset-btn-2').addEventListener('click', function() {
+            smartRUtils.getElementWithoutEventListeners('sr-boxplot-reset-btn-2').addEventListener('click', function() {
                 contextMenu.hide();
                 reset();
             });
@@ -280,7 +280,7 @@ window.smartRApp.directive('boxplot', [
         }
 
         var boxes = {};
-        categories.each(function(category) {
+        categories.forEach(function(category) {
             boxes[category] = boxplot.append('g');
             var params = scope.data[category];
             createBox(params, category, boxes[category]);

@@ -279,11 +279,8 @@ window.smartRApp.directive('heatmapPlot', [
 
                 colSortBox.enter()
                     .append('rect')
-                    .attr('class', 'box colSortBox')
+                    .attr('class', function(d, i) { return 'box colSortBox idx-' + i; })
                     .on('click', function(colName) {
-                        d3.selectAll('.colSortBox').classed('sortedBy', false);
-                        d3.select(this).classed('sortedBy', true);
-
                         var rowValues = rowNames.map(function(rowName, idx) {
                             return [idx, getValueForSquareSorting(colName, rowName)];
                         });
@@ -294,6 +291,18 @@ window.smartRApp.directive('heatmapPlot', [
                         }
                         var sortValues = rowValues.map(function(rowValue) { return rowValue[0]; });
                         updateRowOrder(sortValues);
+
+                        d3.selectAll('.colSortBox').classed('sortedBy', false);
+                        d3.selectAll('.significanceSortBox').classed('sortedBy', false);
+                        d3.select(this).classed('sortedBy', true);
+
+                        var sortedByBoxes = d3.selectAll('.sortedBy').filter('.rowSortBox');
+                        if (!sortedByBoxes.empty()) {
+                            var className = sortedByBoxes.attr('class');
+                            var sortedByIdx = parseInt(className.match(/idx-(\d+)/)[1]);
+                            d3.selectAll('.rowSortBox').classed('sortedBy', false);
+                            d3.selectAll('.rowSortBox').filter('.idx-' + sortValues.indexOf(sortedByIdx)).classed('sortedBy', true);
+                        }
                     });
 
                 colSortBox.transition()
@@ -326,12 +335,8 @@ window.smartRApp.directive('heatmapPlot', [
 
                 rowSortBox.enter()
                     .append('rect')
-                    .attr('class', 'box rowSortBox')
+                    .attr('class', function(d, i) { return 'box rowSortBox idx-' + i; })
                     .on('click', function(rowName) {
-                        d3.selectAll('.rowSortBox').classed('sortedBy', false);
-                        d3.selectAll('.featureSortBox').classed('sortedBy', false);
-                        d3.select(this).classed('sortedBy', true);
-
                         var colValues = colNames.map(function(colName, idx) {
                             return [idx, getValueForSquareSorting(colName, rowName)];
                         });
@@ -342,6 +347,17 @@ window.smartRApp.directive('heatmapPlot', [
                         }
                         var sortValues = colValues.map(function(colValue) { return colValue[0]; });
                         updateColOrder(sortValues);
+
+                        d3.selectAll('.rowSortBox').classed('sortedBy', false);
+                        d3.selectAll('.featureSortBox').classed('sortedBy', false);
+                        d3.select(this).classed('sortedBy', true);
+                        var sortedByBoxes = d3.selectAll('.sortedBy').filter('.colSortBox');
+                        if (!sortedByBoxes.empty()) {
+                            var className = sortedByBoxes.attr('class');
+                            var sortedByIdx = parseInt(className.match(/idx-(\d+)/)[1]);
+                            d3.selectAll('.colSortBox').classed('sortedBy', false);
+                            d3.selectAll('.colSortBox').filter('.idx-' + sortValues.indexOf(sortedByIdx)).classed('sortedBy', true);
+                        }
                     });
 
                 rowSortBox.transition()
@@ -374,9 +390,6 @@ window.smartRApp.directive('heatmapPlot', [
                     .append('rect')
                     .attr('class', 'box significanceSortBox')
                     .on('click', function() {
-                        d3.selectAll('.colSortBox').classed('sortedBy', false);
-                        d3.select(this).classed('sortedBy', true);
-
                         var rowValues = statistics.map(function(d) { return d[ranking]; })
                             .map(function(significanceValue, idx) {
                             return [idx, getInternalSortValue(significanceValue)];
@@ -389,6 +402,17 @@ window.smartRApp.directive('heatmapPlot', [
                         }
                         var sortValues = rowValues.map(function(rowValue) { return rowValue[0]; });
                         updateRowOrder(sortValues);
+
+                        d3.selectAll('.colSortBox').classed('sortedBy', false);
+                        d3.select(this).classed('sortedBy', true);
+
+                        var sortedByBoxes = d3.selectAll('.sortedBy').filter('.rowSortBox');
+                        if (!sortedByBoxes.empty()) {
+                            var className = sortedByBoxes.attr('class');
+                            var sortedByIdx = parseInt(className.match(/idx-(\d+)/)[1]);
+                            d3.selectAll('.rowSortBox').classed('sortedBy', false);
+                            d3.selectAll('.rowSortBox').filter('.idx-' + sortValues.indexOf(sortedByIdx)).classed('sortedBy', true);
+                        }
                     });
 
                 significanceSortBox.transition()
@@ -491,8 +515,6 @@ window.smartRApp.directive('heatmapPlot', [
 
                 bar.enter()
                     .append('rect')
-                    .attr('height', gridFieldHeight)
-                    .attr('y', function(d) { return gridFieldHeight * rowNames.indexOf(d.ROWNAME); })
                     .on('mouseover', function(d) {
                         var html = '';
                         for (var key in d) {
@@ -516,7 +538,9 @@ window.smartRApp.directive('heatmapPlot', [
                     .transition()
                     .duration(animationCheck.checked ? ANIMATION_DURATION : 0)
                     .attr('width', function(d) { return histogramScale(d[ranking]); })
+                    .attr('height', gridFieldHeight)
                     .attr('x', function(d) { return -histogramScale(d[ranking]); })
+                    .attr('y', function(d) { return gridFieldHeight * rowNames.indexOf(d.ROWNAME); })
                     .style('fill', function(d) { return d[ranking] > 0 ? '#990000' : 'steelblue'; });
 
                 var featurePosY = -gridFieldWidth * 2 - longestColNameLength + 20;
@@ -599,10 +623,6 @@ window.smartRApp.directive('heatmapPlot', [
                     .append('rect')
                     .attr('class', 'box featureSortBox')
                     .on('click', function(feature) {
-                        d3.selectAll('.rowSortBox').classed('sortedBy', false);
-                        d3.selectAll('.featureSortBox').classed('sortedBy', false);
-                        d3.select(this).classed('sortedBy', true);
-                        
                         var featureValues = patientIDs.map(function(patientID, idx) {
                             var css = 'extraSquare rowname-' + smartRUtils.makeSafeForCSS(feature) +
                                 ' patientID-' + smartRUtils.makeSafeForCSS(patientID);
@@ -629,6 +649,17 @@ window.smartRApp.directive('heatmapPlot', [
                             return featureValue[0];
                         });
                         updateColOrder(sortValues);
+
+                        d3.selectAll('.rowSortBox').classed('sortedBy', false);
+                        d3.selectAll('.featureSortBox').classed('sortedBy', false);
+                        d3.select(this).classed('sortedBy', true);
+                        var sortedByBoxes = d3.selectAll('.sortedBy').filter('.colSortBox');
+                        if (!sortedByBoxes.empty()) {
+                            var className = sortedByBoxes.attr('class');
+                            var sortedByIdx = parseInt(className.match(/idx-(\d+)/)[1]);
+                            d3.selectAll('.colSortBox').classed('sortedBy', false);
+                            d3.selectAll('.colSortBox').filter('.idx-' + sortValues.indexOf(sortedByIdx)).classed('sortedBy', true);
+                        }
                     });
 
 
@@ -717,7 +748,7 @@ window.smartRApp.directive('heatmapPlot', [
                 statistics.map(function(d) { return d[ranking]; })
                     .sort(function(a, b) { return a - b; })
                     .filter(function(d, i) { return i < cutoff; })
-                    .each(function(d) {
+                    .forEach(function(d) {
                         d3.select('.bar.idx-' + smartRUtils.makeSafeForCSS(d[0])).classed('cuttoffHighlight', true);
                         d3.selectAll('.square.rowname-' + smartRUtils.makeSafeForCSS(rowNames[d[0]])).classed('cuttoffHighlight', true);
                     });
@@ -998,7 +1029,7 @@ window.smartRApp.directive('heatmapPlot', [
                     }).on('click', function(d) {
                         var leafs = d.index.split(' ');
                         var genes = [];
-                        leafs.each(function(leaf) {
+                        leafs.forEach(function(leaf) {
                             var rowName = rowNames[leaf];
                             var split = rowName.split("--");
                             split.shift();
